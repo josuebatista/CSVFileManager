@@ -12,7 +12,7 @@ type
   public
     constructor Create(const FileName: string);
     destructor Destroy; override;
-    function FindRecord(const RecordIdentifier: string): TStringList;
+    function FindRecords(const RecordIdentifier: string): TList;
   end;
 
 implementation
@@ -32,12 +32,12 @@ begin
   inherited;
 end;
 
-function TCSVFileReader.FindRecord(const RecordIdentifier: string): TStringList;
+function TCSVFileReader.FindRecords(const RecordIdentifier: string): TList;
 var
   i: Integer;
   RecordFields: TStringList;
 begin
-  Result := nil;
+  Result := TList.Create;
   for i := 0 to FData.Count - 1 do
   begin
     RecordFields := TStringList.Create;
@@ -46,14 +46,15 @@ begin
       if RecordFields.Count > 0 then
       begin
         if RecordFields[0] = RecordIdentifier then
-        begin
-          Result := RecordFields;
-          Exit;
-        end;
-      end;
-    finally
-      if Result = nil then
+          Result.Add(RecordFields)
+        else
+          RecordFields.Free;
+      end
+      else
         RecordFields.Free;
+    except
+      RecordFields.Free;
+      raise;
     end;
   end;
 end;
