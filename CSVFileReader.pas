@@ -12,7 +12,8 @@ type
   public
     constructor Create(const FileName: string);
     destructor Destroy; override;
-    function FindRecords(const RecordIdentifier: string): TList;
+    function FindRecord(const RecordIdentifier: string): TStringList;
+    function FindMultiRecords(const RecordIdentifier: string): TList;
   end;
 
 implementation
@@ -32,7 +33,33 @@ begin
   inherited;
 end;
 
-function TCSVFileReader.FindRecords(const RecordIdentifier: string): TList;
+function TCSVFileReader.FindRecord(const RecordIdentifier: string): TStringList;
+var
+  i: Integer;
+  RecordFields: TStringList;
+begin
+  Result := nil;
+  for i := 0 to FData.Count - 1 do
+  begin
+    RecordFields := TStringList.Create;
+    try
+      RecordFields.CommaText := FData.Strings[i];
+      if RecordFields.Count > 0 then
+      begin
+        if RecordFields[0] = RecordIdentifier then
+        begin
+          Result := RecordFields;
+          Exit;
+        end;
+      end;
+    finally
+      if Result = nil then
+        RecordFields.Free;
+    end;
+  end;
+end;
+
+function TCSVFileReader.FindMultiRecords(const RecordIdentifier: string): TList;
 var
   i: Integer;
   RecordFields: TStringList;
