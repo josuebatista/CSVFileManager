@@ -8,12 +8,14 @@ uses
 type
   TCSVFileReader = class
   private
+    FFileName: string;
     FData: TStringList;
   public
     constructor Create(const FileName: string);
     destructor Destroy; override;
-    function FindRecord(const RecordIdentifier: string): TStringList;
-    function FindMultiRecords(const RecordIdentifier: string): TList;
+    function ReadRecord(const RecordIdentifier: string): Integer;
+    function ReadFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer): Integer;
+    function WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string): Integer;
   end;
 
 implementation
@@ -23,8 +25,9 @@ implementation
 constructor TCSVFileReader.Create(const FileName: string);
 begin
   inherited Create;
+  FFileName := FileName;
   FData := TStringList.Create;
-  FData.LoadFromFile(FileName);
+  FData.LoadFromFile(FFileName);
 end;
 
 destructor TCSVFileReader.Destroy;
@@ -33,12 +36,12 @@ begin
   inherited;
 end;
 
-function TCSVFileReader.FindRecord(const RecordIdentifier: string): TStringList;
+function TCSVFileReader.ReadRecord(const RecordIdentifier: string): Integer;
 var
   i: Integer;
   RecordFields: TStringList;
 begin
-  Result := nil;
+  Result := 1;  // Record not found
   for i := 0 to FData.Count - 1 do
   begin
     RecordFields := TStringList.Create;
@@ -48,40 +51,70 @@ begin
       begin
         if RecordFields[0] = RecordIdentifier then
         begin
-          Result := RecordFields;
+          Result := 0;  // Record found
           Exit;
         end;
       end;
     finally
-      if Result = nil then
-        RecordFields.Free;
+      RecordFields.Free;
     end;
   end;
 end;
 
-function TCSVFileReader.FindMultiRecords(const RecordIdentifier: string): TList;
+function TCSVFileReader.ReadFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer): Integer;
 var
   i: Integer;
   RecordFields: TStringList;
 begin
-  Result := TList.Create;
+  Result := 1;  // Field not found
   for i := 0 to FData.Count - 1 do
   begin
     RecordFields := TStringList.Create;
     try
       RecordFields.CommaText := FData.Strings[i];
-      if RecordFields.Count > 0 then
+      if (RecordFields.Count > 0) and (RecordFields[0] = RecordIdentifier) then
       begin
-        if RecordFields[0] = RecordIdentifier then
-          Result.Add(RecordFields)
-        else
-          RecordFields.Free;
-      end
-      else
-        RecordFields.Free;
-    except
+        if (FieldPosition >= 0) and (FieldPosition < RecordFields.Count) then
+        begin
+          Result := 0;  // Field found
+          Exit;
+        end;
+      end;
+    finally
       RecordFields.Free;
-      raise;
+    end;
+  end;
+end;
+
+function TCSVFileReader.WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string): Integer;
+var
+  i: Integer;
+  RecordFields: TStringList;
+begin
+  Result := 1;  // Record not found
+  for i := 0 to FData.Count - 1 do
+  begin
+    RecordFields := TStringList.Create;
+    try
+      RecordFields.CommaText := FData.Strings[i];
+      if (RecordFields.Count > 0) and (RecordFields[0] = RecordIdentifier) then
+      begin
+        if (FieldPosition >= 0) and (FieldPosition < RecordFields.Count) then
+        begin
+          RecordFields[FieldPosition] := ThisValue;
+          FData.Strings[i] := RecordFields.CommaText;  // Update the record in FData
+          FData.SaveToFile(FFileName);  // Save changes to the CSV file
+          Result := 0;  // Field updated successfully
+          Exit;
+        end
+        else
+        begin
+          Result := 2;  // Field position not found
+          Exit;
+        end;
+      end;
+    finally
+      RecordFields.Free;
     end;
   end;
 end;

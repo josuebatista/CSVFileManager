@@ -38,7 +38,7 @@ begin
     try
       if SearchType = 'first' then
       begin
-        RecordFields := Reader.FindRecord(RecordIdentifier);
+        RecordFields := Reader.ReadRecord(RecordIdentifier);
         if Assigned(RecordFields) then
         begin
           try
@@ -53,7 +53,7 @@ begin
       end
       else if SearchType = 'all' then
       begin
-        RecordFieldsList := Reader.FindMultiRecords(RecordIdentifier);
+        RecordFieldsList := Reader.ReadMultiRecords(RecordIdentifier);
         if Assigned(RecordFieldsList) then
         begin
           try
