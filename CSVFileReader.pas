@@ -16,7 +16,8 @@ type
     function ReadRecord(const RecordIdentifier: string): TStringList;
     //function ReadFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer): string;
     function ReadFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; RecordIdNumber: Integer = 1): string;
-    function WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string): Integer;
+    //function WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string): Integer;
+    function WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string; RecordIdNumber: Integer = 1): Integer;
     function CountRecordIdentifier(const RecordIdentifier: string): Integer;
   end;
 
@@ -85,9 +86,9 @@ function TCSVFileReader.ReadFieldAtPosition(const RecordIdentifier: string; Fiel
 var
   i: Integer;
   RecordFields: TStringList;
-  ocurrence: Integer;
+  Occurrence: Integer;
 begin
-  Ocurrence := 0;
+  Occurrence := 0;
   for i := 0 to FData.Count - 1 do
   begin
     RecordFields := TStringList.Create;
@@ -97,8 +98,8 @@ begin
       begin
         if RecordFields[0] = RecordIdentifier then
         begin
-          Inc(Ocurrence);
-          if Ocurrence = RecordIdNumber then
+          Inc(Occurrence);
+          if Occurrence = RecordIdNumber then
           begin
             try
               if (FieldPosition >= 0) and (FieldPosition < RecordFields.Count) then
@@ -117,6 +118,46 @@ begin
   end;
 end;
 
+function TCSVFileReader.WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string; RecordIdNumber: Integer = 1): Integer;
+var
+  i: Integer;
+  RecordFields: TStringList;
+  Occurrence: Integer;
+begin
+  Occurrence := 0;
+  Result := 1;  // Record not found
+  for i := 0 to FData.Count - 1 do
+  begin
+    RecordFields := TStringList.Create;
+    try
+      RecordFields.CommaText := FData.Strings[i];
+      if (RecordFields.Count > 0) and (RecordFields[0] = RecordIdentifier) then
+      begin
+	    Inc(Occurrence);
+		if Occurrence = RecordIdNumber then
+		begin
+			if (FieldPosition >= 0) and (FieldPosition < RecordFields.Count) then
+			begin
+			  RecordFields[FieldPosition] := ThisValue;
+			  FData.Strings[i] := RecordFields.CommaText;  // Update the record in FData
+			  FData.SaveToFile(FFileName);  // Save changes to the CSV file
+			  Result := 0;  // Field updated successfully
+			  Exit;
+			end
+			else
+			begin
+			  Result := 2;  // Field position not found
+			  Exit;
+			end;
+		end;	
+      end;
+    finally
+      RecordFields.Free;
+    end;
+  end;
+end;
+
+{
 function TCSVFileReader.WriteFieldAtPosition(const RecordIdentifier: string; FieldPosition: Integer; const ThisValue: string): Integer;
 var
   i: Integer;
@@ -149,6 +190,7 @@ begin
     end;
   end;
 end;
+}
 
 function TCSVFileReader.CountRecordIdentifier(const RecordIdentifier: string): Integer;
 var

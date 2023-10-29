@@ -18,7 +18,7 @@ begin
       Reader := TCSVFileReader.Create('C:\True Commerce\Transaction Manager\Shipping_Import\sotpi_6867625026_20230720.203424.756.csv');
       try
         // Count the number of 'ITM' records and display the result
-        Count := Reader.CountRecordIdentifier('HDR');
+        Count := Reader.CountRecordIdentifier('ITM');
         //WriteLn('Test');
         WriteLn('Number of ITM records: ', IntToStr(Count));
         UPC := Reader.ReadFieldAtPosition('HDR',5);
