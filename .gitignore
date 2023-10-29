@@ -76,3 +76,4 @@ __recovery/
 modules/
 
 # Folder for other working files okay to ignore from git tracking
+temp/
